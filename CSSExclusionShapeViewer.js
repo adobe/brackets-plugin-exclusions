@@ -32,23 +32,23 @@ define(function (require, exports, module) {
     var InlineWidget        = brackets.getModule("editor/InlineWidget").InlineWidget;
     
     // Load tempalte
-    var inlineEditorTemplate = require("text!InlineImageViewer.html");
+    var inlineEditorTemplate = require("text!CSSExclusionShapeViewer.html");
     
-    function InlineImageViewer(fileName, fullPath) {
+    function CSSExclusionShapeViewer(fileName, fullPath) {
         this.fileName = fileName;
         this.fullPath = fullPath;
         InlineWidget.call(this);
     }
-    InlineImageViewer.prototype = new InlineWidget();
-    InlineImageViewer.prototype.constructor = InlineImageViewer;
-    InlineImageViewer.prototype.parentClass = InlineWidget.prototype;
+    CSSExclusionShapeViewer.prototype = new InlineWidget();
+    CSSExclusionShapeViewer.prototype.constructor = CSSExclusionShapeViewer;
+    CSSExclusionShapeViewer.prototype.parentClass = InlineWidget.prototype;
     
-    InlineImageViewer.prototype.fileName = null;
-    InlineImageViewer.prototype.fullPath = null;
-    InlineImageViewer.prototype.$wrapperDiv = null;
-    InlineImageViewer.prototype.$image = null;
+    CSSExclusionShapeViewer.prototype.fileName = null;
+    CSSExclusionShapeViewer.prototype.fullPath = null;
+    CSSExclusionShapeViewer.prototype.$wrapperDiv = null;
+    CSSExclusionShapeViewer.prototype.$image = null;
     
-    InlineImageViewer.prototype.load = function (hostEditor) {
+    CSSExclusionShapeViewer.prototype.load = function (hostEditor) {
         this.parentClass.load.call(this, hostEditor);
         
         this.$wrapperDiv = $(inlineEditorTemplate);
@@ -65,18 +65,18 @@ define(function (require, exports, module) {
         this.$htmlContent.click(this.close.bind(this));
     };
 
-    InlineImageViewer.prototype.close = function () {
+    CSSExclusionShapeViewer.prototype.close = function () {
         this.hostEditor.removeInlineWidget(this);
     };
     
-    InlineImageViewer.prototype.onAdded = function () {
+    CSSExclusionShapeViewer.prototype.onAdded = function () {
         window.setTimeout(this._sizeEditorToContent.bind(this));
     };
     
-    InlineImageViewer.prototype._sizeEditorToContent = function () {
+    CSSExclusionShapeViewer.prototype._sizeEditorToContent = function () {
         this.hostEditor.setInlineWidgetHeight(this, this.$wrapperDiv.height() + 20, true);
         this.$image.css("opacity", 1);
     };
     
-    module.exports = InlineImageViewer;
+    module.exports = CSSExclusionShapeViewer;
 });

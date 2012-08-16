@@ -33,7 +33,7 @@ define(function (require, exports, module) {
         ProjectManager          = brackets.getModule("project/ProjectManager");
     
     // Local modules
-    var InlineImageViewer       = require("InlineImageViewer");
+    var CSSExclusionShapeViewer       = require("CSSExclusionShapeViewer");
     
     /**
      * Return the token string that is at the specified position.
@@ -122,7 +122,7 @@ define(function (require, exports, module) {
         }
         var result = new $.Deferred();
 
-        var imageViewer = new InlineImageViewer(fileName.substr(fileName.lastIndexOf("/")), fileName);
+        var imageViewer = new CSSExclusionShapeViewer(fileName.substr(fileName.lastIndexOf("/")), fileName);
         imageViewer.load(hostEditor);
         
         result.resolve(imageViewer);
