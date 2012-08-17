@@ -34,19 +34,16 @@ define(function (require, exports, module) {
     // Load tempalte
     var inlineEditorTemplate = require("text!CSSExclusionShapeViewer.html");
     
-    function CSSExclusionShapeViewer(fileName, fullPath) {
-        this.fileName = fileName;
-        this.fullPath = fullPath;
+    function CSSExclusionShapeViewer(declaration) {
+        this.declaration = declaration;
         InlineWidget.call(this);
     }
     CSSExclusionShapeViewer.prototype = new InlineWidget();
     CSSExclusionShapeViewer.prototype.constructor = CSSExclusionShapeViewer;
     CSSExclusionShapeViewer.prototype.parentClass = InlineWidget.prototype;
     
-    CSSExclusionShapeViewer.prototype.fileName = null;
-    CSSExclusionShapeViewer.prototype.fullPath = null;
+    CSSExclusionShapeViewer.prototype.declaration = null;
     CSSExclusionShapeViewer.prototype.$wrapperDiv = null;
-    CSSExclusionShapeViewer.prototype.$image = null;
     
     CSSExclusionShapeViewer.prototype.load = function (hostEditor) {
         this.parentClass.load.call(this, hostEditor);
@@ -56,10 +53,7 @@ define(function (require, exports, module) {
         // TODO (jason-sanjose): Use handlebars.js and update template to
         // use expressions instead e.g. {{filename}}
         // Header
-        $(this.$wrapperDiv.find("span")).text(this.fileName);
-
-        // Image
-        this.$image = $(this.$wrapperDiv.find("img")).attr("src", this.fullPath);
+        $(this.$wrapperDiv.find("span")).text(this.declaration);
         
         this.$htmlContent.append(this.$wrapperDiv);
         this.$htmlContent.click(this.close.bind(this));
@@ -75,7 +69,6 @@ define(function (require, exports, module) {
     
     CSSExclusionShapeViewer.prototype._sizeEditorToContent = function () {
         this.hostEditor.setInlineWidgetHeight(this, this.$wrapperDiv.height() + 20, true);
-        this.$image.css("opacity", 1);
     };
     
     module.exports = CSSExclusionShapeViewer;

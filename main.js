@@ -40,22 +40,24 @@ define(function (require, exports, module) {
         }
         function _findStart(start) {
             var currentToken = hostEditor._codeMirror.getTokenAt(start);
+            console.log(currentToken);
             
             if (_foundBeginning(currentToken)) {
+                console.log("Found Beginning!");
                 return { ch: currentToken.start, line: start.line };
             } else if (currentToken.className === null) {
+                console.log("className is null!");
                 if (currentToken.end < hostEditor._codeMirror.getLine(start.line).length) {
                     // look forward to see if the next token starts our declaration.
                     // this covers the case where the user put the cursor right at the beginning
                     // of the declaration, since getting the token gives us the token that's right
                     // before the current position
                     if (_foundBeginning(hostEditor._codeMirror.getTokenAt({ ch: currentToken.end + 1, line: start.line }))) {
-                        return { ch: currentToken.end + 1, line: start.line };
-                    } else if (currentToken.string === "{") {
-                        // then we're at the beginning of the selectior, and it's impossible
-                        // for us to be on a rule, so lets just give up now
-                        return null;
+                        return { ch: currentToken.end, line: start.line };
                     }
+                }
+                if (currentToken.string.match(/[{};]/)) {
+                    return null;
                 }
             }
             
@@ -78,7 +80,7 @@ define(function (require, exports, module) {
             var currentToken = hostEditor._codeMirror.getTokenAt(end);
             
             if (currentToken.className === null) {
-                if (currentToken.string === ";" || currentToken.string === "}") {
+                if (currentToken.string.match(/[{};]/)) {
                     return { ch: currentToken.end, line: end.line };
                 }
             }
@@ -95,7 +97,7 @@ define(function (require, exports, module) {
         }
         
         function _adjustEnd(start, end) {
-            if (start.line > end.line || (start.line === end.line && start.ch >= end.ch)) {
+            if (start && (start.line > end.line || (start.line === end.line && start.ch >= end.ch))) {
                 return { ch: start.ch + 1, line: start.line };
             } else {
                 return end;
@@ -105,7 +107,15 @@ define(function (require, exports, module) {
         var sel = hostEditor.getSelection(false);
         var start = _findStart(sel.start);
         var end = _findEnd(_adjustEnd(start, sel.end));
+        console.log(start);
+        console.log(end);
 
+        if (start) {
+            hostEditor.setSelection(start, end);
+            return hostEditor.getSelectedText();
+        } else {
+            return "";
+        }
     }
     
     /**
@@ -121,13 +131,11 @@ define(function (require, exports, module) {
         
         var result, shapeViewer;
         var declaration = _getCurrentDeclaration(hostEditor);
-        
-
 
         result = new $.Deferred();
 
         // FIXME what arguments should this take?
-        shapeViewer = new CSSExclusionShapeViewer("", "");
+        shapeViewer = new CSSExclusionShapeViewer(declaration);
         shapeViewer.load(hostEditor);
         
         result.resolve(shapeViewer);
