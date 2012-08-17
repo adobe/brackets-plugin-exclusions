@@ -29,106 +29,111 @@ define(function (require, exports, module) {
     "use strict";
     
     // Brackets modules
-    var EditorManager           = brackets.getModule("editor/EditorManager"),
-        ProjectManager          = brackets.getModule("project/ProjectManager");
+    var EditorManager           = brackets.getModule("editor/EditorManager");
     
     // Local modules
     var CSSExclusionShapeViewer       = require("CSSExclusionShapeViewer");
     
-    /**
-     * Return the token string that is at the specified position.
-     *
-     * @param hostEditor {!Editor} editor
-     * @param {!{line:Number, ch:Number}} pos
-     * @return {String} token string at the specified position
-     */
-    function _getStringAtPos(hostEditor, pos) {
-        var token = hostEditor._codeMirror.getTokenAt(pos);
-        
-        // If the pos is at the beginning of a name, token will be the 
-        // preceding whitespace or dot. In that case, try the next pos.
-        if (token.string.trim().length === 0 || token.string === ".") {
-            token = hostEditor._codeMirror.getTokenAt({line: pos.line, ch: pos.ch + 1});
+    function _getCurrentDeclaration(hostEditor) {
+        function _foundBeginning(token) {
+            return token.className === "variable";
         }
-        
-        if (token.className === "string") {
-            var string = token.string;
+        function _findStart(start) {
+            var currentToken = hostEditor._codeMirror.getTokenAt(start);
             
-            // Strip quotes
-            var char = string[0];
-            if (char === "\"" || char === "'") {
-                string = string.substr(1);
+            if (_foundBeginning(currentToken)) {
+                return { ch: currentToken.start, line: start.line };
+            } else if (currentToken.className === null) {
+                if (currentToken.end < hostEditor._codeMirror.getLine(start.line).length) {
+                    // look forward to see if the next token starts our declaration.
+                    // this covers the case where the user put the cursor right at the beginning
+                    // of the declaration, since getting the token gives us the token that's right
+                    // before the current position
+                    if (_foundBeginning(hostEditor._codeMirror.getTokenAt({ ch: currentToken.end + 1, line: start.line }))) {
+                        return { ch: currentToken.end + 1, line: start.line };
+                    } else if (currentToken.string === "{") {
+                        // then we're at the beginning of the selectior, and it's impossible
+                        // for us to be on a rule, so lets just give up now
+                        return null;
+                    }
+                }
             }
-            char = string[string.length - 1];
-            if (char === "\"" || char === "'") {
-                string = string.substr(0, string.length - 1);
-            }
             
-            return string;
-        } else {
-            
-            // Check for url(...);
-            var line = hostEditor._codeMirror.getLine(pos.line);
-            var match = /url\s*\(([^)]*)\)/.exec(line);
-            
-            if (match && match[1]) {
-                // URLs are relative to the doc
-                var docPath = hostEditor.document.file.fullPath;
-                
-                docPath = docPath.substr(0, docPath.lastIndexOf("/"));
-                
-                return docPath + "/" + match[1];
+            // if we didn't find anything by looking forward, we should continue looking back
+            if (currentToken.start === 0) {
+                if (start.line === 0) {
+                    return null;
+                } else {
+                    return _findStart({
+                        ch: hostEditor._codeMirror.getLine(start.line - 1).length,
+                        line: start.line - 1
+                    });
+                }
+            } else {
+                return _findStart({ ch: currentToken.start, line: start.line });
             }
         }
         
-        return "";
+        function _findEnd(end) {
+            var currentToken = hostEditor._codeMirror.getTokenAt(end);
+            
+            if (currentToken.className === null) {
+                if (currentToken.string === ";" || currentToken.string === "}") {
+                    return { ch: currentToken.end, line: end.line };
+                }
+            }
+            
+            if (currentToken.end === hostEditor._codeMirror.getLine(end.line).length) {
+                if (end.line === hostEditor.lineCount() - 1) {
+                    return end;
+                } else {
+                    return _findEnd({ ch: 0, line: end.line + 1});
+                }
+            } else {
+                return _findEnd({ ch: end.ch + 1, line: end.line });
+            }
+        }
+        
+        function _adjustEnd(start, end) {
+            if (start.line > end.line || (start.line === end.line && start.ch >= end.ch)) {
+                return { ch: start.ch + 1, line: start.line };
+            } else {
+                return end;
+            }
+        }
+        
+        var sel = hostEditor.getSelection(false);
+        var start = _findStart(sel.start);
+        var end = _findEnd(_adjustEnd(start, sel.end));
+
     }
     
     /**
-     * This function is registered with EditManager as an inline editor provider. It creates an inline editor
-     * when cursor is on a JavaScript function name, find all functions that match the name
-     * and show (one/all of them) in an inline editor.
+     * This function is registered with EditManager as an inline editor provider.
+     * It creates an inline editor when the cursor is on a exclusion shape CSS rule.
      *
-     * @param {!Editor} editor
+     * @param {!Editor} hostEditor
      * @param {!{line:Number, ch:Number}} pos
      * @return {$.Promise} a promise that will be resolved with an InlineWidget
      *      or null if we're not going to provide anything.
      */
-    function inlineImageViewerProvider(hostEditor, pos) {
+    function cssExclusionShapeViewerProvider(hostEditor, pos) {
         
-        // Only provide image viewer if the selection is within a single line
-        var sel = hostEditor.getSelection(false);
-        if (sel.start.line !== sel.end.line) {
-            return null;
-        }
+        var result, shapeViewer;
+        var declaration = _getCurrentDeclaration(hostEditor);
         
-        // Always use the selection start for determining the image file name. The pos
-        // parameter is usually the selection end.        
-        var fileName = _getStringAtPos(hostEditor, hostEditor.getSelection(false).start);
-        if (fileName === "") {
-            return null;
-        }
-        
-        // Check for valid file extensions
-        if (!/(.png|.jpg|.jpeg|.gif|.svg)$/i.test(fileName)) {
-            return null;
-        }
 
-        // TODO: Check for relative path
-        var projectPath = ProjectManager.getProjectRoot().fullPath;
-        
-        if (fileName.indexOf(projectPath) !== 0) {
-            fileName = projectPath + fileName;
-        }
-        var result = new $.Deferred();
 
-        var imageViewer = new CSSExclusionShapeViewer(fileName.substr(fileName.lastIndexOf("/")), fileName);
-        imageViewer.load(hostEditor);
+        result = new $.Deferred();
+
+        // FIXME what arguments should this take?
+        shapeViewer = new CSSExclusionShapeViewer("", "");
+        shapeViewer.load(hostEditor);
         
-        result.resolve(imageViewer);
+        result.resolve(shapeViewer);
         
         return result.promise();
     }
 
-    EditorManager.registerInlineEditProvider(inlineImageViewerProvider);
+    EditorManager.registerInlineEditProvider(cssExclusionShapeViewerProvider);
 });
