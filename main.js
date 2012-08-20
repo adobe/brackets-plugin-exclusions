@@ -34,7 +34,7 @@ define(function (require, exports, module) {
     // Local modules
     var CSSExclusionShapeViewer       = require("CSSExclusionShapeViewer");
     
-    function _getCurrentDeclaration(hostEditor) {
+    function _getTokenListForCurrentDeclaration(hostEditor) {
         function _foundBeginning(token) {
             return token.className === "variable";
         }
@@ -101,16 +101,92 @@ define(function (require, exports, module) {
             }
         }
         
+        // Note this assumes that the start and end given will be inside the document.
+        // If they aren't, weird things may happen
+        function _getTokenListForRegion(start, end) {
+            var tokens = [],
+                currentToken = hostEditor._codeMirror.getTokenAt(start),
+                currentPosition = start,
+                currentLine = hostEditor._codeMirror.getLine(start.line);
+            
+            while (currentPosition.ch <= end.ch && currentPosition.line <= end.line) {
+                tokens.push(currentToken);
+                currentPosition.ch = currentToken.end + 1;
+                if (currentPosition.ch > currentLine.length) {
+                    currentPosition.ch = 0;
+                    currentPosition.line += 1;
+                    currentLine = hostEditor._codeMirror.getLine(currentPosition.line);
+                }
+                currentToken = hostEditor._codeMirror.getTokenAt(currentPosition);
+            }
+            
+            return tokens;
+        }
+        
         var sel = hostEditor.getSelection(false);
         var start = _findStart(sel.start);
         var end = _findEnd(_adjustEnd(start, sel.end));
 
         if (start) {
-            hostEditor.setSelection(start, end);
-            return hostEditor.getSelectedText();
+            return _getTokenListForRegion(start, end);
         } else {
             return null;
         }
+    }
+    
+    // There is one per shape that this code understands.
+    var shapeParsers = {
+        rectangle: function (tokens) {
+            return null;
+        },
+        circle: function (tokens) {
+            return null;
+        },
+        ellipse: function (tokens) {
+            return null;
+        },
+        polygon: function (tokens) {
+            return null;
+        }
+    };
+    
+    function _extractShape(tokens) {
+        var i,
+            state = 0,
+            parser;
+        for (i = 0; !parser && i < tokens.length; i++) {
+            switch (state) {
+            case 0: // eat up initial whitespace
+                if (tokens[i].string.trim()) {
+                    state = 1;
+                }
+                break;
+            case 1: // consume the declaration name
+                if (tokens[i].className === "variable" &&
+                        tokens[i].string.match(/^(-\w+-)?shape-(inside|outside)$/)) {
+                    state = 2;
+                } else {
+                    return null;
+                }
+                break;
+            case 2: // eat up the : and any whitespace between name and value
+                if (tokens[i].string.trim() && tokens[i].string !== ":") {
+                    state = 3;
+                }
+                break;
+            case 3: // process actual value
+                parser = shapeParsers[tokens[i].string];
+                if (!parser) {
+                    return null;
+                }
+                break;
+            default:
+                console.log("Something went wrong, I don't know what state " + state + " is!");
+                return null;
+            }
+        }
+
+        return parser.call(tokens.slice(i));
     }
     
     /**
@@ -128,7 +204,8 @@ define(function (require, exports, module) {
         }
         
         var result, shapeViewer;
-        var declaration = _getCurrentDeclaration(hostEditor);
+        var declaration = _getTokenListForCurrentDeclaration(hostEditor);
+        //var shape = _extractShape(declaration);
         if (declaration) {
             result = new $.Deferred();
 
