@@ -40,13 +40,10 @@ define(function (require, exports, module) {
         }
         function _findStart(start) {
             var currentToken = hostEditor._codeMirror.getTokenAt(start);
-            console.log(currentToken);
             
             if (_foundBeginning(currentToken)) {
-                console.log("Found Beginning!");
                 return { ch: currentToken.start, line: start.line };
             } else if (currentToken.className === null) {
-                console.log("className is null!");
                 if (currentToken.end < hostEditor._codeMirror.getLine(start.line).length) {
                     // look forward to see if the next token starts our declaration.
                     // this covers the case where the user put the cursor right at the beginning
@@ -85,14 +82,14 @@ define(function (require, exports, module) {
                 }
             }
             
-            if (currentToken.end === hostEditor._codeMirror.getLine(end.line).length) {
+            if (currentToken.end >= hostEditor._codeMirror.getLine(end.line).length) {
                 if (end.line === hostEditor.lineCount() - 1) {
                     return end;
                 } else {
                     return _findEnd({ ch: 0, line: end.line + 1});
                 }
             } else {
-                return _findEnd({ ch: end.ch + 1, line: end.line });
+                return _findEnd({ ch: currentToken.end + 1, line: end.line });
             }
         }
         
@@ -107,14 +104,12 @@ define(function (require, exports, module) {
         var sel = hostEditor.getSelection(false);
         var start = _findStart(sel.start);
         var end = _findEnd(_adjustEnd(start, sel.end));
-        console.log(start);
-        console.log(end);
 
         if (start) {
             hostEditor.setSelection(start, end);
             return hostEditor.getSelectedText();
         } else {
-            return "";
+            return null;
         }
     }
     
@@ -128,19 +123,25 @@ define(function (require, exports, module) {
      *      or null if we're not going to provide anything.
      */
     function cssExclusionShapeViewerProvider(hostEditor, pos) {
+        if (hostEditor.getModeForSelection() !== "css") {
+            return null;
+        }
         
         var result, shapeViewer;
         var declaration = _getCurrentDeclaration(hostEditor);
+        if (declaration) {
+            result = new $.Deferred();
 
-        result = new $.Deferred();
-
-        // FIXME what arguments should this take?
-        shapeViewer = new CSSExclusionShapeViewer(declaration);
-        shapeViewer.load(hostEditor);
+            // FIXME what arguments should this take?
+            shapeViewer = new CSSExclusionShapeViewer(declaration);
+            shapeViewer.load(hostEditor);
         
-        result.resolve(shapeViewer);
+            result.resolve(shapeViewer);
         
-        return result.promise();
+            return result.promise();
+        } else {
+            return null;
+        }
     }
 
     EditorManager.registerInlineEditProvider(cssExclusionShapeViewerProvider);

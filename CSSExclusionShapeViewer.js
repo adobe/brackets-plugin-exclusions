@@ -50,9 +50,6 @@ define(function (require, exports, module) {
         
         this.$wrapperDiv = $(inlineEditorTemplate);
         
-        // TODO (jason-sanjose): Use handlebars.js and update template to
-        // use expressions instead e.g. {{filename}}
-        // Header
         $(this.$wrapperDiv.find("span")).text(this.declaration);
         
         this.$htmlContent.append(this.$wrapperDiv);
