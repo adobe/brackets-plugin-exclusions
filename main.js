@@ -23,7 +23,7 @@
 
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
-/*global define, brackets, $ */
+/*global define, brackets, $, document */
 
 define(function (require, exports, module) {
     "use strict";
@@ -32,7 +32,9 @@ define(function (require, exports, module) {
     var EditorManager           = brackets.getModule("editor/EditorManager");
     
     // Local modules
-    var CSSExclusionShapeViewer       = require("CSSExclusionShapeViewer");
+    var CSSExclusionShapeViewer = require("CSSExclusionShapeViewer");
+    
+    var svgns = "http://www.w3.org/2000/svg";
     
     function _getTokenListForCurrentDeclaration(hostEditor) {
         function _foundBeginning(token) {
@@ -136,19 +138,75 @@ define(function (require, exports, module) {
     
     // There is one per shape that this code understands.
     var shapeParsers = {
-        rectangle: function (tokens) {
-            return null;
+        rectangle: function (params) {
+            if (params.length < 4 || params.length > 6) {
+                return null;
+            } else {
+                var rect = document.createElementNS(svgns, "rect");
+                rect.setAttribute("x", "0%");
+                rect.setAttribute("y", "0%");
+                rect.setAttribute("width", params[2].trim());
+                rect.setAttribute("height", params[3].trim());
+                if (params.length > 4) {
+                    rect.setAttribute("rx", params[4].trim());
+                    if (params.length > 5) {
+                        rect.setAttribute("ry", params[5].trim());
+                    }
+                }
+                return rect;
+            }
         },
-        circle: function (tokens) {
-            return null;
+        circle: function (params) {
+            if (params.length !== 3) {
+                return null;
+            } else {
+                var circle = document.createElementNS(svgns, "circle");
+                circle.setAttribute("cx", "50%");
+                circle.setAttribute("cy", "50%");
+                circle.setAttribute("r", params[2].trim());
+                return circle;
+            }
         },
-        ellipse: function (tokens) {
-            return null;
+        ellipse: function (params) {
+            if (params.length !== 4) {
+                return null;
+            } else {
+                var ellipse = document.createElementNS(svgns, "ellipse");
+                ellipse.setAttribute("cx", "50%");
+                ellipse.setAttribute("cy", "50%");
+                ellipse.setAttribute("rx", params[2].trim());
+                ellipse.setAttribute("ry", params[3].trim());
+                return ellipse;
+            }
         },
-        polygon: function (tokens) {
-            return null;
+        polygon: function (params) {
+            if (params.length < 1) {
+                return null;
+            } else {
+                var polygon = document.createElementNS(svgns, "polygon");
+                var points = [];
+                if (/^\s*(nonzero|evenodd)\s*$/.test(params[0])) {
+                    polygon.setAttribute("fill-rule", params[0].trim());
+                    params = params.slice(0);
+                }
+                // FIXME these points need to be translated so they fit in the view
+                polygon.setAttribute("points", $.map(params, function (e, i) { return e.trim().split(/\s+/).join(","); }).join(" "));
+                return polygon;
+            }
         }
     };
+    
+    // since the css tokenizer does some weird things with tokens,
+    // we need to fix up the list so that we can process it in a reasonable manner.
+    function _normalizeParameterList(tokens) {
+        var params = $.map(tokens, function (e, i) { return e.string; }).join("");
+        var paramsNoParens = params.match(/^\((.*)\)/)[1];
+        if (paramsNoParens) {
+            return paramsNoParens.split(',');
+        } else {
+            return [];
+        }
+    }
     
     function _extractShape(tokens) {
         var i,
@@ -158,26 +216,22 @@ define(function (require, exports, module) {
             switch (state) {
             case 0: // eat up initial whitespace
                 if (tokens[i].string.trim()) {
-                    state = 1;
+                    // consume the declaration name
+                    if (tokens[i].className === "variable" &&
+                            tokens[i].string.match(/^(-\w+-)?shape-(inside|outside)$/)) {
+                        state = 1;
+                    } else {
+                        return null;
+                    }
                 }
                 break;
-            case 1: // consume the declaration name
-                if (tokens[i].className === "variable" &&
-                        tokens[i].string.match(/^(-\w+-)?shape-(inside|outside)$/)) {
-                    state = 2;
-                } else {
-                    return null;
-                }
-                break;
-            case 2: // eat up the : and any whitespace between name and value
+            case 1: // eat up the : and any whitespace between name and value
                 if (tokens[i].string.trim() && tokens[i].string !== ":") {
-                    state = 3;
-                }
-                break;
-            case 3: // process actual value
-                parser = shapeParsers[tokens[i].string];
-                if (!parser) {
-                    return null;
+                    // process actual value
+                    parser = shapeParsers[tokens[i].string];
+                    if (!parser) {
+                        return null;
+                    }
                 }
                 break;
             default:
@@ -186,7 +240,7 @@ define(function (require, exports, module) {
             }
         }
 
-        return parser.call(tokens.slice(i));
+        return parser.call(null, _normalizeParameterList(tokens.slice(i)));
     }
     
     /**
@@ -205,12 +259,11 @@ define(function (require, exports, module) {
         
         var result, shapeViewer;
         var declaration = _getTokenListForCurrentDeclaration(hostEditor);
-        //var shape = _extractShape(declaration);
-        if (declaration) {
+        var shape = _extractShape(declaration);
+        if (shape) {
             result = new $.Deferred();
 
-            // FIXME what arguments should this take?
-            shapeViewer = new CSSExclusionShapeViewer(declaration);
+            shapeViewer = new CSSExclusionShapeViewer(shape);
             shapeViewer.load(hostEditor);
         
             result.resolve(shapeViewer);
