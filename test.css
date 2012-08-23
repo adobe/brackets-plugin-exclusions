@@ -1,0 +1,11 @@
+.foo {
+    -webkit-shape-inside: circle(100%, 0.5em, 100%);
+    -webkit-shape-inside: rectangle(45%, 45%, 90%, 60%, 25%, 10%);
+    -webkit-shape-inside: ellipse(100%, 100%, 100%, 100%);
+    -webkit-shape-inside: polygon(10% 20%, 30% 40%, 40% 50%);
+    shape-inside: circle(100px, 100px, 100px);
+    shape-inside: rectangle(45%, 45%, 90%, 60%, 25%, 10%);
+    shape-inside: rectangle(45%, 45%, 90%, 60%);
+    shape-inside: ellipse(100%, 100%, 100%, 100%);
+    shape-inside: polygon(10% 20%, 30% 40%, 40% 50%);
+}
