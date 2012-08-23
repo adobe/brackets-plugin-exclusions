@@ -211,7 +211,8 @@ define(function (require, exports, module) {
     function _extractShape(tokens) {
         var i,
             state = 0,
-            parser;
+            parser,
+            shape;
         for (i = 0; !parser && i < tokens.length; i++) {
             switch (state) {
             case 0: // eat up initial whitespace
@@ -240,7 +241,10 @@ define(function (require, exports, module) {
             }
         }
 
-        return parser.call(null, _normalizeParameterList(tokens.slice(i)));
+        shape = parser.call(null, _normalizeParameterList(tokens.slice(i)));
+        shape.setAttribute("stroke", "red");
+        shape.setAttribute("fill", "none");
+        return shape;
     }
     
     /**
