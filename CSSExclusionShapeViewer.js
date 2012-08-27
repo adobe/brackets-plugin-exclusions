@@ -34,8 +34,10 @@ define(function (require, exports, module) {
     // Load tempalte
     var inlineEditorTemplate = require("text!CSSExclusionShapeViewer.html");
     
-    function CSSExclusionShapeViewer(shape) {
+    function CSSExclusionShapeViewer(shape, width, height) {
         this.shape = shape;
+        this.width = width;
+        this.height = height;
         InlineWidget.call(this);
     }
     CSSExclusionShapeViewer.prototype = new InlineWidget();
@@ -43,6 +45,8 @@ define(function (require, exports, module) {
     CSSExclusionShapeViewer.prototype.parentClass = InlineWidget.prototype;
     
     CSSExclusionShapeViewer.prototype.shape = null;
+    CSSExclusionShapeViewer.prototype.width = 200;
+    CSSExclusionShapeViewer.prototype.height = 200;
     CSSExclusionShapeViewer.prototype.$wrapperDiv = null;
     
     CSSExclusionShapeViewer.prototype.load = function (hostEditor) {
@@ -50,7 +54,10 @@ define(function (require, exports, module) {
         
         this.$wrapperDiv = $(inlineEditorTemplate);
         
-        $(this.$wrapperDiv.find("#shape")).append(this.shape);
+        var svg = $(this.$wrapperDiv.find("#shape"));
+        svg.css("width", this.width + "px");
+        svg.css("height", this.height + "px");
+        svg.append(this.shape);
         
         this.$htmlContent.append(this.$wrapperDiv);
         this.$htmlContent.click(this.close.bind(this));

@@ -35,6 +35,8 @@ define(function (require, exports, module) {
     var CSSExclusionShapeViewer = require("CSSExclusionShapeViewer");
     
     var svgns = "http://www.w3.org/2000/svg";
+    var shapeWidth = 200;
+    var shapeHeight = 200;
     
     function _getTokenListForCurrentDeclaration(hostEditor) {
         function _foundBeginning(token) {
@@ -284,7 +286,7 @@ define(function (require, exports, module) {
         if (shape) {
             result = new $.Deferred();
 
-            shapeViewer = new CSSExclusionShapeViewer(shape);
+            shapeViewer = new CSSExclusionShapeViewer(shape, shapeWidth, shapeHeight);
             shapeViewer.load(hostEditor);
         
             result.resolve(shapeViewer);
