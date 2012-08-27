@@ -138,6 +138,16 @@ define(function (require, exports, module) {
         }
     }
     
+    function _nullGuard(f, a, b) {
+        if (a == null && b != null) {
+            return b;
+        } else if (b == null) {
+            return a;
+        } else {
+            return f.call(null, a, b);
+        }
+    }
+
     // There is one per shape that this code understands.
     var shapeParsers = {
         rectangle: function (params) {
@@ -185,6 +195,7 @@ define(function (require, exports, module) {
             var polygon = document.createElementNS(svgns, "polygon");
             var points = [];
             var foundBadPoint = false;
+            var minX, minY, maxX, maxY, translate, scale;
             if (params.length < 1) {
                 return null;
             } else {
@@ -192,16 +203,29 @@ define(function (require, exports, module) {
                     polygon.setAttribute("fill-rule", params[0].trim());
                     params = params.slice(0);
                 }
+                // parse all of the points and find the min and max
                 points = $.map(params, function (point, index) {
                     // FIXME right now, we only accept polygons specified with pixels
-                    var xy = point.match(/^\s*(\d+)px\s+(\d+)px\s*$/);
+                    var xy = point.match(/^\s*(-?\d+)px\s+(-?\d+)px\s*$/);
                     if (xy) {
-                        return xy[1] + "," + xy[2];
+                        minX = _nullGuard(Math.min, xy[1], minX);
+                        maxX = _nullGuard(Math.max, xy[1], maxX);
+                        minY = _nullGuard(Math.min, xy[2], minY);
+                        maxY = _nullGuard(Math.max, xy[2], maxY);
+                        return { x: xy[1], y: xy[2] };
                     } else {
                         foundBadPoint = true;
                         console.log("Found a point that we can't use in polygon: " + point);
                         return null;
                     }
+                });
+                // scale points so that they fit the viewport and format for svg
+                scale = 200 / (maxX < maxY ? maxY : maxX);
+                translate = (minX > minY ? minY : minX) * scale;
+                points = $.map(points, function (point, index) {
+                    var x = point.x * scale - translate;
+                    var y = point.y * scale - translate;
+                    return x + "," + y;
                 });
                 if (foundBadPoint) {
                     return null;
