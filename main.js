@@ -220,11 +220,11 @@ define(function (require, exports, module) {
                     }
                 });
                 // scale points so that they fit the viewport and format for svg
-                scale = 200 / (maxX < maxY ? maxY : maxX);
-                translate = (minX > minY ? minY : minX) * scale;
+                translate = (minX > minY ? minY : minX);
+                scale = 200 / ((maxX < maxY ? maxY : maxX) - translate);
                 points = $.map(points, function (point, index) {
-                    var x = point.x * scale - translate;
-                    var y = point.y * scale - translate;
+                    var x = (point.x - translate) * scale;
+                    var y = (point.y - translate) * scale;
                     return x + "," + y;
                 });
                 if (foundBadPoint) {

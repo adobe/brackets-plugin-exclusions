@@ -72,7 +72,7 @@ define(function (require, exports, module) {
     };
     
     CSSExclusionShapeViewer.prototype._sizeEditorToContent = function () {
-        this.hostEditor.setInlineWidgetHeight(this, this.$wrapperDiv.height() + 20, true);
+        this.hostEditor.setInlineWidgetHeight(this, this.$wrapperDiv.height() + this.height * 0.2 + 20, true);
     };
     
     module.exports = CSSExclusionShapeViewer;
