@@ -180,18 +180,33 @@ define(function (require, exports, module) {
             }
         },
         polygon: function (params) {
+            var polygon = document.createElementNS(svgns, "polygon");
+            var points = [];
+            var foundBadPoint = false;
             if (params.length < 1) {
                 return null;
             } else {
-                var polygon = document.createElementNS(svgns, "polygon");
-                var points = [];
                 if (/^\s*(nonzero|evenodd)\s*$/.test(params[0])) {
                     polygon.setAttribute("fill-rule", params[0].trim());
                     params = params.slice(0);
                 }
-                // FIXME these points need to be translated so they fit in the view
-                polygon.setAttribute("points", $.map(params, function (e, i) { return e.trim().split(/\s+/).join(","); }).join(" "));
-                return polygon;
+                points = $.map(params, function (point, index) {
+                    // FIXME right now, we only accept polygons specified with pixels
+                    var xy = point.match(/^\s*(\d+)px\s+(\d+)px\s*$/);
+                    if (xy) {
+                        return xy[1] + "," + xy[2];
+                    } else {
+                        foundBadPoint = true;
+                        console.log("Found a point that we can't use in polygon: " + point);
+                        return null;
+                    }
+                });
+                if (foundBadPoint) {
+                    return null;
+                } else {
+                    polygon.setAttribute("points", points.join(" "));
+                    return polygon;
+                }
             }
         }
     };
@@ -242,8 +257,10 @@ define(function (require, exports, module) {
         }
 
         shape = parser.call(null, _normalizeParameterList(tokens.slice(i)));
-        shape.setAttribute("stroke", "red");
-        shape.setAttribute("fill", "none");
+        if (shape) {
+            shape.setAttribute("stroke", "red");
+            shape.setAttribute("fill", "none");
+        }
         return shape;
     }
     
