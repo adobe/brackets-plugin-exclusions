@@ -137,16 +137,44 @@ define(function (require, exports, module) {
         }
     }
     
-    function _nullGuard(f, a, b) {
-        if (a == null && b != null) {
-            return b;
-        } else if (b == null) {
-            return a;
-        } else {
-            return f.call(null, a, b);
+    var MinMaxCalculator = (function () {
+        function MinMaxCalculator() {
+            this.min = null;
+            this.max = null;
         }
-    }
+        
+        function _nullGuard(f, a, b) {
+            if (a === null && b !== null) {
+                return b;
+            } else if (b === null) {
+                return a;
+            } else {
+                return f.call(null, a, b);
+            }
+        }
+        
+        MinMaxCalculator.prototype.addValue = function (x) {
+            this.min = _nullGuard(Math.min, x, this.min);
+            this.max = _nullGuard(Math.max, x, this.max);
+        };
+        
+        return MinMaxCalculator;
+    }());
 
+    var ShapeScaler = (function () {
+        // expects an object with "min" and "max" properties
+        function ShapeScaler(minMax, size) {
+            this._translate = minMax.min;
+            this._scale = size / (minMax.max - this._translate);
+        }
+        
+        ShapeScaler.prototype.scale = function (x) {
+            return (x - this._translate) * this._scale;
+        };
+        
+        return ShapeScaler;
+    }());
+    
     // There is one per shape that this code understands.
     var shapeParsers = {
         rectangle: function (params) {
@@ -191,10 +219,11 @@ define(function (require, exports, module) {
             }
         },
         polygon: function (params) {
-            var polygon = document.createElementNS(svgns, "polygon");
-            var points = [];
-            var foundBadPoint = false;
-            var minX, minY, maxX, maxY, translate, scale;
+            var polygon = document.createElementNS(svgns, "polygon"),
+                points = [],
+                foundBadPoint = false,
+                minMax = new MinMaxCalculator(),
+                scaler = null;
             if (params.length < 1) {
                 return null;
             } else {
@@ -207,10 +236,8 @@ define(function (require, exports, module) {
                     // FIXME right now, we only accept polygons specified with pixels
                     var xy = point.match(/^\s*(-?\d+)px\s+(-?\d+)px\s*$/);
                     if (xy) {
-                        minX = _nullGuard(Math.min, xy[1], minX);
-                        maxX = _nullGuard(Math.max, xy[1], maxX);
-                        minY = _nullGuard(Math.min, xy[2], minY);
-                        maxY = _nullGuard(Math.max, xy[2], maxY);
+                        minMax.addValue(xy[1]);
+                        minMax.addValue(xy[2]);
                         return { x: xy[1], y: xy[2] };
                     } else {
                         foundBadPoint = true;
@@ -219,11 +246,10 @@ define(function (require, exports, module) {
                     }
                 });
                 // scale points so that they fit the viewport and format for svg
-                translate = (minX > minY ? minY : minX);
-                scale = shapeViewSide / ((maxX < maxY ? maxY : maxX) - translate);
+                scaler = new ShapeScaler(minMax, shapeViewSide);
                 points = $.map(points, function (point, index) {
-                    var x = (point.x - translate) * scale;
-                    var y = (point.y - translate) * scale;
+                    var x = scaler.scale(point.x);
+                    var y = scaler.scale(point.y);
                     return x + "," + y;
                 });
                 if (foundBadPoint) {
