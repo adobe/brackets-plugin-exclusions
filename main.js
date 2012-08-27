@@ -35,8 +35,7 @@ define(function (require, exports, module) {
     var CSSExclusionShapeViewer = require("CSSExclusionShapeViewer");
     
     var svgns = "http://www.w3.org/2000/svg";
-    var shapeWidth = 200;
-    var shapeHeight = 200;
+    var shapeViewSide = 200;
     
     function _getTokenListForCurrentDeclaration(hostEditor) {
         function _foundBeginning(token) {
@@ -221,7 +220,7 @@ define(function (require, exports, module) {
                 });
                 // scale points so that they fit the viewport and format for svg
                 translate = (minX > minY ? minY : minX);
-                scale = 200 / ((maxX < maxY ? maxY : maxX) - translate);
+                scale = shapeViewSide / ((maxX < maxY ? maxY : maxX) - translate);
                 points = $.map(points, function (point, index) {
                     var x = (point.x - translate) * scale;
                     var y = (point.y - translate) * scale;
@@ -310,7 +309,7 @@ define(function (require, exports, module) {
         if (shape) {
             result = new $.Deferred();
 
-            shapeViewer = new CSSExclusionShapeViewer(shape, shapeWidth, shapeHeight);
+            shapeViewer = new CSSExclusionShapeViewer(shape, shapeViewSide, shapeViewSide);
             shapeViewer.load(hostEditor);
         
             result.resolve(shapeViewer);
