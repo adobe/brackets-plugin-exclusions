@@ -166,11 +166,16 @@ define(function (require, exports, module) {
         function ShapeScaler(minMax, size) {
             this._translate = minMax.min;
             this._scale = size / (minMax.max - this._translate);
+            this._lengthScale = size / (minMax.max - minMax.min);
         }
         
         ShapeScaler.prototype.scale = function (x) {
             return (x - this._translate) * this._scale;
         };
+        
+        ShapeScaler.prototype.scaleLength = function (x) {
+            return x + this._lengthScale;
+        }
         
         return ShapeScaler;
     }());
