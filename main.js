@@ -191,7 +191,7 @@ define(function (require, exports, module) {
         'pc': function (x) { return x * 9; }
     };
     function _convertUnitsToPixels(length) {
-        var match = length.match(/^\s*(-?\d+(?:\.\d+)?)(.+)\s*$/),
+        var match = length.match(/^\s*(-?\d+(?:\.\d+)?)(\S+)\s*$/),
             number = match[1],
             unit = match[2],
             converter = unitConverters[unit];
@@ -232,8 +232,8 @@ define(function (require, exports, module) {
                 minMax.addValue(0);
                 minMax.addValue(width);
                 minMax.addValue(height);
-                minMax.addValue(rx);
-                minMax.addValue(ry);
+                minMax.addValue(rx * 2);
+                minMax.addValue(ry * 2);
                 
                 scaler = new ShapeScaler(minMax, shapeViewSide);
                 width = scaler.scaleLength(width);
@@ -255,13 +255,21 @@ define(function (require, exports, module) {
             }
         },
         circle: function (params) {
+            var circle = document.createElementNS(svgns, "circle"),
+                r,
+                scaler;
+
             if (params.length !== 3) {
                 return null;
             } else {
-                var circle = document.createElementNS(svgns, "circle");
                 circle.setAttribute("cx", "50%");
                 circle.setAttribute("cy", "50%");
-                circle.setAttribute("r", params[2].trim());
+                
+                r = _convertUnitsToPixels(params[2]);
+                if (r === null) { return null; }
+                
+                scaler = new ShapeScaler({ min: 0, max: r * 2 }, shapeViewSide);
+                circle.setAttribute("r", scaler.scaleLength(r) + "px");
                 return circle;
             }
         },

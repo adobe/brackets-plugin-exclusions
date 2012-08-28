@@ -1,5 +1,5 @@
 .foo {
-    -webkit-shape-inside: circle(100px, 0.5em, 100px);
+    -webkit-shape-inside: circle(100px, 0.5in, 100in);
     -webkit-shape-inside: rectangle(45px, 45px, 90px, 60px, 25px, 10px);
     -webkit-shape-inside: ellipse(100px, 100px, 100px, 100px);
     -webkit-shape-inside: polygon(10px 20px, 30px 40px, 40px 50px);
