@@ -219,14 +219,14 @@ define(function (require, exports, module) {
             } else {
                 width = _convertUnitsToPixels(params[2]);
                 height = _convertUnitsToPixels(params[3]);
-                if (width === null || height === null) { return null; }
+                if (width === null || height === null || width < 0 || height < 0) { return null; }
                 if (params.length > 4) {
                     rx = _convertUnitsToPixels(params[4]);
-                    if (rx === null) { return null; }
+                    if (rx === null || rx < 0) { return null; }
                     
                     if (params.length > 5) {
                         ry = _convertUnitsToPixels(params[5]);
-                        if (ry === null) { return null; }
+                        if (ry === null || rx < 0) { return null; }
                     }
                 }
                 minMax.addValue(0);
@@ -266,7 +266,7 @@ define(function (require, exports, module) {
                 circle.setAttribute("cy", "50%");
                 
                 r = _convertUnitsToPixels(params[2]);
-                if (r === null) { return null; }
+                if (r === null || r < 0) { return null; }
                 
                 scaler = new ShapeScaler({ min: 0, max: r * 2 }, shapeViewSide);
                 circle.setAttribute("r", scaler.scaleLength(r) + "px");
@@ -274,14 +274,27 @@ define(function (require, exports, module) {
             }
         },
         ellipse: function (params) {
+            var ellipse = document.createElementNS(svgns, "ellipse"),
+                rx = 0,
+                ry = 0,
+                minMax = new MinMaxCalculator(),
+                scaler;
             if (params.length !== 4) {
                 return null;
             } else {
-                var ellipse = document.createElementNS(svgns, "ellipse");
+                rx = _convertUnitsToPixels(params[2]);
+                ry = _convertUnitsToPixels(params[3]);
+                if (rx === null || ry === null || rx < 0 || ry < 0) { return null; }
+                
+                minMax.addValue(0);
+                minMax.addValue(rx * 2);
+                minMax.addValue(ry * 2);
+                scaler = new ShapeScaler(minMax, shapeViewSide);
+                
                 ellipse.setAttribute("cx", "50%");
                 ellipse.setAttribute("cy", "50%");
-                ellipse.setAttribute("rx", params[2].trim());
-                ellipse.setAttribute("ry", params[3].trim());
+                ellipse.setAttribute("rx", scaler.scaleLength(rx) + "px");
+                ellipse.setAttribute("ry", scaler.scaleLength(ry) + "px");
                 return ellipse;
             }
         },
