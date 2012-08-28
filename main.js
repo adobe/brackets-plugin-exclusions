@@ -191,7 +191,7 @@ define(function (require, exports, module) {
         'pc': function (x) { return x * 9; }
     };
     function _convertUnitsToPixels(length) {
-        var match = length.match(/^\s*(-\d+(?:\.\d+)?)(.+)\s*$/),
+        var match = length.match(/^\s*(-?\d+(?:\.\d+)?)(.+)\s*$/),
             number = match[1],
             unit = match[2],
             converter = unitConverters[unit];
