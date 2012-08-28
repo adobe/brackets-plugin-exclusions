@@ -241,15 +241,15 @@ define(function (require, exports, module) {
                 
                 rect.setAttribute("x", "0px");
                 rect.setAttribute("y", "0px");
-                rect.setAttribute("width", width);
-                rect.setAttribute("height", height);
+                rect.setAttribute("width", width + "px");
+                rect.setAttribute("height", height + "px");
                 if (rx !== null) {
                     rx = scaler.scaleLength(rx);
-                    rect.setAttribute("rx", rx);
+                    rect.setAttribute("rx", rx + "px");
                 }
                 if (ry !== null) {
                     ry = scaler.scaleLength(ry);
-                    rect.setAttribute("ry", ry);
+                    rect.setAttribute("ry", ry + "px");
                 }
                 return rect;
             }
@@ -292,12 +292,13 @@ define(function (require, exports, module) {
                 }
                 // parse all of the points and find the min and max
                 points = $.map(params, function (point, index) {
-                    // FIXME right now, we only accept polygons specified with pixels
-                    var xy = point.match(/^\s*(-?\d+)px\s+(-?\d+)px\s*$/);
-                    if (xy) {
-                        minMax.addValue(xy[1]);
-                        minMax.addValue(xy[2]);
-                        return { x: xy[1], y: xy[2] };
+                    var xy = point.match(/^\s*(\S+)\s+(\S+)\s*$/),
+                        x = _convertUnitsToPixels(xy[1]),
+                        y = _convertUnitsToPixels(xy[2]);
+                    if (xy && x !== null && y !== null) {
+                        minMax.addValue(x);
+                        minMax.addValue(y);
+                        return { x: x, y: y };
                     } else {
                         foundBadPoint = true;
                         console.log("Found a point that we can't use in polygon: " + point);

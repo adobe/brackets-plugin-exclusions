@@ -7,5 +7,5 @@
     shape-inside: rectangle(450px, 45px, 900px, 600px, 250px, 100px);
     shape-inside: rectangle(45px, 45px, 90px, 60px);
     shape-inside: ellipse(100px, 100px, 100px, 100px);
-    shape-inside: polygon(10px 20px, 30px 40px, 10px 50px);
+    shape-inside: polygon(-10px 20px, 30px 40px, -10px 50px);
 }
