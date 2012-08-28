@@ -174,28 +174,82 @@ define(function (require, exports, module) {
         };
         
         ShapeScaler.prototype.scaleLength = function (x) {
-            return x + this._lengthScale;
-        }
+            return x * this._lengthScale;
+        };
         
         return ShapeScaler;
     }());
     
+    // FIXME right now, this does not work on relative units,
+    // it only works on absolute units.
+    var unitConverters = {
+        'px': function (x) { return x; },
+        'cm': function (x) { return x * 0.026458; },
+        'mm': function (x) { return x * 0.264583; },
+        'in': function (x) { return x / 96; },
+        'pt': function (x) { return x * 0.75; },
+        'pc': function (x) { return x * 9; }
+    };
+    function _convertUnitsToPixels(length) {
+        var match = length.match(/^\s*(-\d+(?:\.\d+)?)(.+)\s*$/),
+            number = match[1],
+            unit = match[2],
+            converter = unitConverters[unit];
+        
+        if (match && converter) {
+            return converter.call(null, number);
+        } else {
+            return null;
+        }
+    }
+    
     // There is one per shape that this code understands.
     var shapeParsers = {
         rectangle: function (params) {
+            var rect = document.createElementNS(svgns, "rect"),
+                width = 0,
+                height = 0,
+                rx = null,
+                ry = null,
+                minMax = new MinMaxCalculator(),
+                scaler;
+
             if (params.length < 4 || params.length > 6) {
                 return null;
             } else {
-                var rect = document.createElementNS(svgns, "rect");
-                rect.setAttribute("x", "0%");
-                rect.setAttribute("y", "0%");
-                rect.setAttribute("width", params[2].trim());
-                rect.setAttribute("height", params[3].trim());
+                width = _convertUnitsToPixels(params[2]);
+                height = _convertUnitsToPixels(params[3]);
+                if (width === null || height === null) { return null; }
                 if (params.length > 4) {
-                    rect.setAttribute("rx", params[4].trim());
+                    rx = _convertUnitsToPixels(params[4]);
+                    if (rx === null) { return null; }
+                    
                     if (params.length > 5) {
-                        rect.setAttribute("ry", params[5].trim());
+                        ry = _convertUnitsToPixels(params[5]);
+                        if (ry === null) { return null; }
                     }
+                }
+                minMax.addValue(0);
+                minMax.addValue(width);
+                minMax.addValue(height);
+                minMax.addValue(rx);
+                minMax.addValue(ry);
+                
+                scaler = new ShapeScaler(minMax, shapeViewSide);
+                width = scaler.scaleLength(width);
+                height = scaler.scaleLength(height);
+                
+                rect.setAttribute("x", "0px");
+                rect.setAttribute("y", "0px");
+                rect.setAttribute("width", width);
+                rect.setAttribute("height", height);
+                if (rx !== null) {
+                    rx = scaler.scaleLength(rx);
+                    rect.setAttribute("rx", rx);
+                }
+                if (ry !== null) {
+                    ry = scaler.scaleLength(ry);
+                    rect.setAttribute("ry", ry);
                 }
                 return rect;
             }
