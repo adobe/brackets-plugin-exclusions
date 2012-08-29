@@ -34,6 +34,8 @@ define(function (require, exports, module) {
     // Local modules
     var CSSExclusionShapeViewer = require("CSSExclusionShapeViewer");
     
+    var _shapeViewers = [];
+    
     var svgns = "http://www.w3.org/2000/svg";
     var shapeViewSide = 200;
     
@@ -406,18 +408,29 @@ define(function (require, exports, module) {
      *      or null if we're not going to provide anything.
      */
     function cssExclusionShapeViewerProvider(hostEditor, pos) {
+        var result, shapeViewer, declaration, shape;
+        
         if (hostEditor.getModeForSelection() !== "css") {
             return null;
         }
         
-        var result, shapeViewer;
-        var declaration = _getTokenListForCurrentDeclaration(hostEditor);
-        var shape = _extractShape(declaration);
+        declaration = _getTokenListForCurrentDeclaration(hostEditor);
+        shapeViewer = _shapeViewers[pos.line];
+        if (shapeViewer) {
+            // FIXME we should check and see if we're on a different declaration on
+            // on the line, and continue in that case instead of bailing
+            shapeViewer.close();
+            delete _shapeViewers[pos.line];
+            return null;
+        }
+        
+        shape = _extractShape(declaration);
         if (shape) {
             result = new $.Deferred();
 
             shapeViewer = new CSSExclusionShapeViewer(shape, shapeViewSide, shapeViewSide);
             shapeViewer.load(hostEditor);
+            _shapeViewers[pos.line] = shapeViewer;
         
             result.resolve(shapeViewer);
         

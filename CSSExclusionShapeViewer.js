@@ -60,7 +60,6 @@ define(function (require, exports, module) {
         svg.append(this.shape);
         
         this.$htmlContent.append(this.$wrapperDiv);
-        this.$htmlContent.click(this.close.bind(this));
     };
 
     CSSExclusionShapeViewer.prototype.close = function () {
