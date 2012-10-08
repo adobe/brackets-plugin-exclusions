@@ -8,6 +8,8 @@ Installing
 
 To use this extension, simply copy it into the `brackets/src/extensions/user` folder, like any other [extension][Brackets Extensions].
 
+Some sample shapes can be found in `test.css` in this distribution.
+
 Known Issues
 ------------
 
