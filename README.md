@@ -13,9 +13,6 @@ Known Issues
 
 * This does not work with shapes that are specified using relative units (em, %, vh, etc). It does work with absolute units (cm, px, in, etc)
 
-
-Links
------
 [ExtensionsHOWTO]: https://github.com/adobe/brackets/wiki/How%20to%20write%20extensions
 [Brackets Home]: http://brackets.io/
 [CSS Exclusions Spec]:  http://dev.w3.org/csswg/css3-exclusions/
