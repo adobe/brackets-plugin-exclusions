@@ -308,18 +308,22 @@ define(function (require, exports, module) {
                 }
                 // parse all of the points and find the min and max
                 points = $.map(params, function (point, index) {
-                    var xy = point.match(/^\s*(\S+)\s+(\S+)\s*$/),
+                    var xy = point.match(/^\s*(\S+)\s+(\S+)\s*$/);
+                    var x, y;
+
+                    if (xy && xy.length === 3) {
                         x = _convertUnitsToPixels(xy[1]),
                         y = _convertUnitsToPixels(xy[2]);
-                    if (xy && x !== null && y !== null) {
-                        minMax.addValue(x);
-                        minMax.addValue(y);
-                        return { x: x, y: y };
-                    } else {
-                        foundBadPoint = true;
-                        console.log("Found a point that we can't use in polygon: " + point);
-                        return null;
+                        if (x !== null && y !== null) {
+                            minMax.addValue(x);
+                            minMax.addValue(y);
+                            return { x: x, y: y };
+                        }
                     }
+
+                    foundBadPoint = true;
+                    console.log("Found a point that we can't use in polygon: " + point);
+                    return null;
                 });
                 // scale points so that they fit the viewport and format for svg
                 scaler = new ShapeScaler(minMax, shapeViewSide);
