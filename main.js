@@ -304,7 +304,7 @@ define(function (require, exports, module) {
             } else {
                 if (/^\s*(nonzero|evenodd)\s*$/.test(params[0])) {
                     polygon.setAttribute("fill-rule", params[0].trim());
-                    params = params.slice(0);
+                    params = params.slice(1);
                 }
                 // parse all of the points and find the min and max
                 points = $.map(params, function (point, index) {
@@ -408,6 +408,10 @@ define(function (require, exports, module) {
         }
         
         declaration = _getTokenListForCurrentDeclaration(hostEditor);
+        if (!declaration) {
+            return null;
+        }
+
         shapeViewer = _shapeViewers[pos.line];
         if (shapeViewer) {
             // FIXME we should check and see if we're on a different declaration on

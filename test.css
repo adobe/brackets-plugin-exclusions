@@ -8,4 +8,5 @@
     shape-inside: rectangle(45px, 45px, 90px, 60px);
     shape-inside: ellipse(100cm, 100in, 100mm, 100cm);
     shape-inside: polygon(-10px 20px, 30px 40px, -10px 50px);
+    -webkit-shape-inside: polygon(nonzero, 300px 20px, 585px 20px, 1220px 655px, 0px 655px);
 }
