@@ -1,5 +1,5 @@
-CSS Exclusion Shape Quick Edit
-==============================
+CSS Exclusion Shape Viewer
+==========================
 
 This is a [Quick Edit Extension][ExtensionsHOWTO] for [Brackets][Brackets Home] that allows viewing of [CSS Exclusions][CSS Exclusions Spec] shapes in an inline editor.
 
