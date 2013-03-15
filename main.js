@@ -34,21 +34,20 @@ define(function (require, exports, module) {
     
     function _getTokenListForCurrentDeclaration(hostEditor) {
         function _foundBeginning(token) {
-            return token.className === "variable";
+            return token.className && token.className.match(/^property/);
         }
         function _findStart(start) {
             var currentToken = hostEditor._codeMirror.getTokenAt(start);
             
             if (_foundBeginning(currentToken)) {
-                return { ch: currentToken.start, line: start.line };
-            } else if (currentToken.className === null) {
+                return { ch: currentToken.start + 1, line: start.line };
+            } else if (currentToken.className === "meta") {
                 if (currentToken.end < hostEditor._codeMirror.getLine(start.line).length) {
-                    // look forward to see if the next token starts our declaration.
-                    // this covers the case where the user put the cursor right at the beginning
-                    // of the declaration, since getting the token gives us the token that's right
-                    // before the current position
+                    // if we have a property like -webkit-shape-outside, the -webkit prefix is a 
+                    // different token type than the property, so if we're on the prefix, we
+                    // need to look ahead to find the property.
                     if (_foundBeginning(hostEditor._codeMirror.getTokenAt({ ch: currentToken.end + 1, line: start.line }))) {
-                        return { ch: currentToken.end, line: start.line };
+                        return { ch: currentToken.end + 1, line: start.line };
                     }
                 }
                 if (currentToken.string.match(/[{};]/)) {
@@ -312,7 +311,7 @@ define(function (require, exports, module) {
                     var x, y;
 
                     if (xy && xy.length === 3) {
-                        x = _convertUnitsToPixels(xy[1]),
+                        x = _convertUnitsToPixels(xy[1]);
                         y = _convertUnitsToPixels(xy[2]);
                         if (x !== null && y !== null) {
                             minMax.addValue(x);
@@ -364,7 +363,7 @@ define(function (require, exports, module) {
             case 0: // eat up initial whitespace
                 if (tokens[i].string.trim()) {
                     // consume the declaration name
-                    if (tokens[i].className === "variable" &&
+                    if (tokens[i].className && tokens[i].className.match(/^property/) &&
                             tokens[i].string.match(/^(-\w+-)?shape-(inside|outside)$/)) {
                         state = 1;
                     } else {
