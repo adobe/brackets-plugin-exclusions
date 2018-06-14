@@ -1,6 +1,14 @@
 CSS Exclusion Shape Viewer
 ==========================
 
+Deprecated
+----------
+
+This project is no longer maintained and is now archived. If you wish to revive this project, please consider forking it.
+
+Overview
+--------
+
 This is a [Quick Edit Extension][ExtensionsHOWTO] for [Brackets][Brackets Home] that allows viewing of [CSS Exclusions][CSS Exclusions Spec] shapes in an inline editor.
 
 Installing
